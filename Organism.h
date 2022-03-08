@@ -1,7 +1,3 @@
-//
-// Created by kdex9 on 3/7/2022.
-//
-
 #ifndef EVILUTION_ORGANISM_H
 #define EVILUTION_ORGANISM_H
 
