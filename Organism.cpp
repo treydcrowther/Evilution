@@ -3,14 +3,14 @@
 
 using namespace std;
 
+int Organism::m_array_size = 4;
+
 Organism::Organism(int *stats)
 {
     m_x_location = stats[m_X_INDEX];
     m_y_location = stats[m_Y_INDEX];
     m_speed = stats[m_SPEED_INDEX];
     m_sight = stats[m_SIGHT_INDEX];
-
-    m_array_size = 4;
     m_stats_array = new int[m_array_size];
     UpdateArray();
 }

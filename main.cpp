@@ -5,13 +5,6 @@
 
 void OrganismDriverCode(int rank);
 
-/*
- * Design issue:
- * I want this number to be a static member variables of the Organism class,
- * but I kept getting weird compile errors. This works for now.
- */
-int numAttributes = 4;
-
 using namespace std;
 
 int main(int argc, char** argv)
@@ -29,6 +22,7 @@ int main(int argc, char** argv)
 
 void OrganismDriverCode(int rank)
 {
+    int numAttributes = Organism::GetArraySize();
     int* stats = new int[numAttributes];
     if(rank == 0)
     {

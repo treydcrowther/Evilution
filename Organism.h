@@ -8,7 +8,7 @@ public:
 
     void UpdateArray();
 
-    int GetArraySize();
+    static int GetArraySize();
 
     void PrintStats() const;
 
@@ -26,7 +26,7 @@ public:
     void SetSight(int sight);
 
 private:
-    int m_array_size;
+    static int m_array_size;
     //The indices refer to each attributes location in the array
     int m_x_location;
     const int m_X_INDEX = 0;
