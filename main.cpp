@@ -9,7 +9,9 @@ int main(int argc, char** argv) {
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MCW, &rank);
     MPI_Comm_size(MCW, &size);
-    
+
+    cout << rank << endl;
+
     MPI_Finalize();
     return 0;
 }

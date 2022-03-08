@@ -72,6 +72,10 @@ dist
 # mpeltonen/sbt-idea plugin
 .idea_modules/
 
+#build files
+cmake-build-debug
+.idea
+
 # JIRA plugin
 atlassian-ide-plugin.xml
 
