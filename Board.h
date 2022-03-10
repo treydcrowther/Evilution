@@ -14,15 +14,15 @@ class Board {
 public:
     explicit Board(int rank, std::string configFile = "");
 
-    void TimePassing(int dayNumber);
+    void timePassing(int dayNumber);
 
-    std::pair<int, int>* FindFoodInSight(std::pair<int, int> coordinates, int sight);
+    std::pair<int, int>* findFoodInSight(std::pair<int, int> coordinates, int sight);
 
-    bool MoveClosestToFood(Organism* organism, std::pair<int,int>* pFoodLocation);
+    bool moveClosestToFood(Organism* organism, std::pair<int,int>* pFoodLocation);
 
-    void PrintFoodArray();
+    void printFoodArray();
 
-    void PrintStats();
+    void printStats();
 
 private:
     int m_rank;

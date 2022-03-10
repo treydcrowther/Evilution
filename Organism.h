@@ -7,49 +7,58 @@ class Organism {
 public:
     explicit Organism(int* stats);
     
-    explicit Organism(int x, int y, int speed, int sight);
-
-    void UpdateArray();
+    explicit Organism(int id, int x, int y, int speed, int sight);
 
     static int GetArraySize();
-
+    
     static int* RandomOrganismStats();
+
+    void ConsumeFood(int food);
 
     void MoveToLocation(std::pair<int, int>* location);
 
-    void ConsumeFood(int food);
+    void UpdateArray();
 
     void PrintStats() const;
 
     //Getters
+    int GetId();
     int GetX();
     int GetY();
     int GetSpeed();
     int GetSight();
+    int GetCurrentFood();
     int* GetStatsArray();
-    bool WantsMoreFood();
     std::pair<int,int> GetCoordinatePair();
 
     //Setters
+    void SetId(int id);
     void SetX(int x);
     void SetY(int y);
     void SetSpeed(int speed);
     void SetSight(int sight);
 
 private:
-    static int m_array_size;
+
     //The indices refer to each attributes location in the array
+    enum StatsIndices
+    {
+        ID,
+        X,
+        Y,
+        SPEED,
+        SIGHT,
+        FOOD
+    };
+    static int m_array_size;
     int m_id;
     int m_x_location;
-    const int m_X_INDEX = 0;
     int m_y_location;
-    const int m_Y_INDEX = 1;
     int m_speed;
-    const int m_SPEED_INDEX = 2;
     int m_sight;
-    const int m_SIGHT_INDEX = 3;
-    int* m_stats_array;
     int m_currentFood;
+
+    int* m_stats_array;
     bool m_moreFood; // Potential Idea: If set to true the organism will go after more food as opposed to closer food
 };
 

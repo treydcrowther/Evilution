@@ -19,13 +19,14 @@ int main(int argc, char** argv)
     //OrganismDriverCode(rank);
 
     Board* board = new Board(rank);
-    board->PrintStats();
-    board->PrintFoodArray();
-    for (int i = 1; i < 12; i++) {
-        board->TimePassing(i);
-        cout << "\n\n\n" << endl;
+    board->printStats();
+    board->printFoodArray();
+    for (int i = 1; i < 20; i++) {
+        board->timePassing(i);
+        cout << "\n\n\n";
     }
-    cout << "finishing here" << endl;
+    board->printFoodArray();
+
     MPI_Finalize();
     return 0;
 }
