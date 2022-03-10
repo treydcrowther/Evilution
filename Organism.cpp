@@ -1,5 +1,4 @@
 #include "Organism.h"
-#include <iostream>
 
 using namespace std;
 
@@ -12,6 +11,18 @@ Organism::Organism(int *stats)
     m_speed = stats[m_SPEED_INDEX];
     m_sight = stats[m_SIGHT_INDEX];
     m_stats_array = new int[m_array_size];
+    m_currentFood = 0;
+    UpdateArray();
+}
+
+Organism::Organism(int x, int y, int speed, int sight)
+{
+    m_x_location = x;
+    m_y_location = y;
+    m_speed = speed;
+    m_sight = sight;
+    m_stats_array = new int[m_array_size];
+    m_currentFood = 0;
     UpdateArray();
 }
 
@@ -46,6 +57,11 @@ int Organism::GetSpeed()
 int Organism::GetSight()
 {
     return m_sight;
+}
+
+std::pair<int, int> Organism::GetCoordinatePair() 
+{
+    return std::pair<int, int>(m_x_location, m_y_location);
 }
 
 void Organism::SetX(int x)
@@ -85,3 +101,27 @@ int *Organism::GetStatsArray()
     return m_stats_array;
 }
 
+void Organism::MoveToLocation(std::pair<int, int>* location) {
+    m_x_location = location->first;
+    m_y_location = location->second;
+    UpdateArray();
+    cout << "new location is " << m_x_location << "," << m_y_location << endl;
+}
+
+void Organism::ConsumeFood(int food) {
+    m_currentFood += food;
+    cout << "Current food is " << m_currentFood << endl;
+}
+
+
+bool Organism::WantsMoreFood() { return m_moreFood; }
+
+int* Organism::RandomOrganismStats() {
+    int numAttributes = Organism::GetArraySize();
+    int* stats = new int[numAttributes];
+    for (int i = 0; i < numAttributes; i++)
+    {
+        stats[i] = i * 2 + 1;
+    }
+    return stats;
+}
