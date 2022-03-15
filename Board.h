@@ -3,34 +3,47 @@
 
 #include <string>
 #include <set>
-#include "Organism.h"
 #include <vector>
 #include <array>
 #include <iostream>
+#include "Organism.h"
 
+#define MCW MPI_COMM_WORLD
 constexpr auto ARRAYSIZE = 9;
+typedef std::shared_ptr<Organism> OrganismPointer;
 
 class Board {
 public:
-    explicit Board(int rank, std::string configFile = "");
+    explicit Board(int rank, int totalBoards, std::string configFile = "");
 
     void timePassing(int dayNumber);
-
-    std::pair<int, int>* findFoodInSight(std::pair<int, int> coordinates, int sight);
-
-    bool moveClosestToFood(Organism* organism, std::pair<int,int>* pFoodLocation);
 
     void printFoodArray();
 
     void printStats();
 
+    int** getFoodBoard();
+
+    int getBoardSize();
+
 private:
+    void initializeFoodArray();
+    void addOrganismToBoard(OrganismPointer pOrganism);
+    void addFoodToBoard(int x, int y, int count);
+    void sendAndReceiveOrganisms();
+    int determineRecipient(Organism::BoardMoves move);
+    void removeOrganismFromBoard(OrganismPointer pOrganism);
+    void removeFood(PairPointer location);
+
     int m_rank;
-    int m_arraySize = ARRAYSIZE;
-    int m_foodArray[ARRAYSIZE][ARRAYSIZE] = { 0 };
     int m_foodCount;
-    std::vector<Organism*> m_organisms;
-    std::vector<Organism*> m_organismsToSend;
+    int** m_foodArray;
+    int m_rowSize;
+    int m_boardSize = ARRAYSIZE;
+    int m_totalBoards;
+
+    std::vector<OrganismPointer> m_organisms;
+    std::vector<OrganismPointer> m_organismsToSend;
 };
 
 

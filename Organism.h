@@ -2,9 +2,24 @@
 #define EVILUTION_ORGANISM_H
 
 #include <iostream>
+#include <vector>
+#include <chrono>
+
+typedef std::pair<int, int> CoordPair;
+typedef std::shared_ptr<CoordPair> PairPointer;
 
 class Organism {
 public:
+    //These are used to send an organism to a different board
+    enum class BoardMoves
+    {
+        NONE,
+        UP,
+        DOWN,
+        LEFT,
+        RIGHT
+    };
+
     explicit Organism(int* stats);
     
     explicit Organism(int id, int x, int y, int speed, int sight);
@@ -13,9 +28,9 @@ public:
     
     static int* RandomOrganismStats();
 
-    void ConsumeFood(int food);
-
-    void MoveToLocation(std::pair<int, int>* location);
+    PairPointer findAndConsumeFood(int** foodBoard, int boardSize);
+    
+    void printLocations();
 
     void UpdateArray();
 
@@ -29,7 +44,11 @@ public:
     int GetSight();
     int GetCurrentFood();
     int* GetStatsArray();
-    std::pair<int,int> GetCoordinatePair();
+    int* GetTransitionStatsArray();
+    PairPointer GetCoordinatePair();
+    PairPointer GetTransitionLocation();
+    BoardMoves GetTransitionDirection();
+    bool requiresTransition();
 
     //Setters
     void SetId(int id);
@@ -39,6 +58,12 @@ public:
     void SetSight(int sight);
 
 private:
+    bool moveClosestToFood(PairPointer pFoodLocation);
+    void ConsumeFood(int food);
+    void MoveToLocation(PairPointer location);
+    void moveRandomDirection(int boardSize);
+    void setTransitionLocation(PairPointer location);
+    void setRequiresTransition();
 
     //The indices refer to each attributes location in the array
     enum StatsIndices
@@ -58,9 +83,14 @@ private:
     int m_sight;
     int m_currentFood;
 
+    BoardMoves m_transitionDirection = BoardMoves::NONE;
+    int m_transitionX;
+    int m_transitionY;
+    bool m_requiresTransition;
+
     int* m_stats_array;
     bool m_moreFood; // Potential Idea: If set to true the organism will go after more food as opposed to closer food
+    std::vector<PairPointer> m_locationList;
 };
-
 
 #endif //EVILUTION_ORGANISM_H

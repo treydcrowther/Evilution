@@ -1,8 +1,6 @@
 #include <iostream>
 #include <mpi.h>
-#include "Organism.h"
 #include "Board.h"
-#define MCW MPI_COMM_WORLD
 
 void OrganismDriverCode(int rank);
 
@@ -15,17 +13,17 @@ int main(int argc, char** argv)
     MPI_Comm_rank(MCW, &rank);
     MPI_Comm_size(MCW, &size);
 
-    //cout << "Size is: " << size;
+    if (size != 4 && size != 9 && size != 16) {
+        cout << "Size must be either 4, 9, 16, 25, 36..." << endl;
+        return 1;
+    }
+
     //OrganismDriverCode(rank);
 
-    Board* board = new Board(rank);
-    board->printStats();
-    board->printFoodArray();
-    for (int i = 1; i < 20; i++) {
+    Board* board = new Board(rank, size);
+    for (int i = 1; i < 100; i++) {
         board->timePassing(i);
-        cout << "\n\n\n";
     }
-    board->printFoodArray();
 
     MPI_Finalize();
     return 0;

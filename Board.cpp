@@ -1,161 +1,161 @@
 #include "Board.h"
 #include <iostream>
+#include <mpi.h>
 
 using namespace std;
 
-/// <summary>
-/// Calculate the distance between two points
-/// </summary>
-/// <param name="organism">Where the organism is located</param>
-/// <param name="destination">Where the destination is located</param>
-/// <returns>The calculated distance</returns>
-double calculateDistance(std::pair<int,int>* organism, std::pair<int, int>* destination) {
-	double x = (double)organism->first - (double)destination->first;
-	double y = (double)organism->second - (double)destination->second;
-	return sqrt((x * x) + (y * y));
-}
-
-/// <summary>
-/// Determine which direction to move destination to get it closer to organism
-/// </summary>
-/// <param name="organismLoc">Location of organism</param>
-/// <param name="destination">Location of destination</param>
-/// <returns>The direction the destination needs to move</returns>
-int calculateDesiredMovement(int organismLoc, int destination) {
-	int adjustedMove = organismLoc - destination;
-	return adjustedMove != 0 ? adjustedMove / abs(adjustedMove) : adjustedMove;
-}
-
 /*Constructor for the board*/
-Board::Board(int rank, string configFile) {
-	this->m_rank = rank;
+Board::Board(int rank, int totalBoards, string configFile) {
+	m_rank = rank;
+	m_totalBoards = totalBoards;
+	m_rowSize = sqrt(m_totalBoards);
+	initializeFoodArray();
+
 	int initialOrganisms = 1;
-	m_foodCount = 1;
 	if (configFile != "") {
 		// Pull necessary information from config file
 
 	}
-
-	for (int i = 0; i < initialOrganisms; i++) {
-		this->m_organisms.push_back(new Organism(0,5,5,2,8));
-	}
-
-	for (int i = 0; i < this->m_foodCount; i++) {
-		this->m_foodArray[8][7] = 1;
-		this->m_foodArray[7][0] = 1;
-		this->m_foodArray[7][7] = 1;
-		this->m_foodArray[0][3] = 1;
-		this->m_foodArray[0][8] = 1;
-		this->m_foodArray[5][4] = 1;
-	}
+	if(rank == 3)
+		addOrganismToBoard(OrganismPointer(new Organism(0, 5, 5, 2, 8)));
+	addFoodToBoard(8, 7, 2);
+	addFoodToBoard(7, 0, 1);
+	addFoodToBoard(7, 7, 1);
+	addFoodToBoard(0, 3, 1);
+	addFoodToBoard(0, 8, 1);
+	addFoodToBoard(5, 4, 1);
 }
 
-/// <summary>
-/// The driver for the entire board simulation
-/// </summary>
-/// <param name="dayNumber">What day number it is</param>
+int Board::getBoardSize() {
+	return m_boardSize;
+}
+
+int** Board::getFoodBoard() {
+	return m_foodArray;
+}
+
+// Remove food from the board once it has been consumed
+void Board::removeFood(PairPointer location)
+{
+	if (location == nullptr) return;
+	int x = location->first;
+	int y = location->second;
+	m_foodCount -= m_foodArray[x][y];
+	m_foodArray[x][y] = 0;
+}
+
+void Board::addFoodToBoard(int x, int y, int count) {
+	m_foodArray[x][y] += count;
+	m_foodCount += count;
+}
+
+void Board::addOrganismToBoard(OrganismPointer pOrganism) {
+	m_organisms.push_back(pOrganism);
+}
+
+void Board::removeOrganismFromBoard(OrganismPointer pOrganism) {
+	m_organisms.erase(std::remove(m_organisms.begin(), m_organisms.end(), pOrganism));
+}
+
+
 void Board::timePassing(int dayNumber) {
 	for (auto pOrganism : m_organisms) {
+		cout << "Day " << dayNumber << " for board " << m_rank << endl;
+		removeFood(pOrganism->findAndConsumeFood(getFoodBoard(), getBoardSize()));
+		if (pOrganism->requiresTransition()) m_organismsToSend.push_back(pOrganism);
 		pOrganism->PrintStats();
-		auto* foodLocation = findFoodInSight(pOrganism->GetCoordinatePair(), pOrganism->GetSight());
-		if (foodLocation != nullptr && moveClosestToFood(pOrganism, foodLocation)) {
-			pOrganism->ConsumeFood(m_foodArray[pOrganism->GetX()][pOrganism->GetY()]);
-			m_foodArray[pOrganism->GetX()][pOrganism->GetY()] = 0;
+	}
+	MPI_Barrier(MCW);
+	sendAndReceiveOrganisms();
+}
+
+// Transition all organisms to new boards
+void Board::sendAndReceiveOrganisms() {
+	auto listOfOrganisms = std::vector<std::vector<OrganismPointer>>();
+	for (int i = 0; i < m_totalBoards; i++)
+		listOfOrganisms.push_back(std::vector<OrganismPointer>());
+
+	for (auto pOrganism : m_organismsToSend) {
+ 		int recipient = determineRecipient(pOrganism->GetTransitionDirection());
+		listOfOrganisms.at(recipient).push_back(pOrganism);
+		removeOrganismFromBoard(pOrganism);
+	}
+	m_organismsToSend.clear();
+
+	for (int i = 0; i < m_totalBoards; i++) {
+		if (i == m_rank) continue;
+		int numOrganismsToSend = listOfOrganisms.at(i).size();
+		MPI_Send(&numOrganismsToSend, 1, MPI_INT, i, 0, MCW);
+		int numOrganismsToRecv;
+		MPI_Recv(&numOrganismsToRecv, 1, MPI_INT, i, 0, MCW, MPI_STATUS_IGNORE);
+		
+		// Send all the organisms
+		for (auto organism : listOfOrganisms.at(i)) {
+			int* organismStats = organism->GetTransitionStatsArray();
+			MPI_Send(organismStats, Organism::GetArraySize(), MPI_INT, i, 0, MCW);
+		}
+		//Receive all the new organisms
+		for (int j = 0; j < numOrganismsToRecv; j++) {
+			int* organismStats = new int[Organism::GetArraySize()];
+			MPI_Recv(organismStats, Organism::GetArraySize(), MPI_INT, i, 0, MCW, MPI_STATUS_IGNORE);
+			cout << "Organism " << organismStats[0] << " transitioned to board " << m_rank << " at location " << organismStats[1] << "," << organismStats[2] << endl;
+			addOrganismToBoard(OrganismPointer(new Organism(organismStats)));
 		}
 	}
 }
 
-/// <summary>
-/// Finds food within sight of the organism
-/// This searches a grid within potential sight distance then calculates the 
-/// actual distance for every point to determine if it is close enough
-/// </summary>
-/// <param name="coordinates">The coordinates of the organism</param>
-/// <param name="sight">The sight value of the organism</param>
-/// <returns>The location on the board of the closest food or nullptr if no food is nearby</returns>
-std::pair<int, int>* Board::findFoodInSight(std::pair<int,int> coordinates, int sight) {
-	int x = coordinates.first;
-	int y = coordinates.second;
-	int smallestX = (x - sight) > 0 ? x - sight : 0;
-	int smallestY = (y - sight) > 0 ? y - sight : 0;
-	int largestX = m_arraySize > (x + sight) ? x + sight : m_arraySize - 1;
-	int largestY = m_arraySize > (y + sight) ? y + sight : m_arraySize - 1;
+// Determine what board the organism should be sent to from the move type
+int Board::determineRecipient(Organism::BoardMoves move) {
+	int recipientRank = m_rank;
+	switch (move) {
+	case Organism::BoardMoves::UP: 
+		recipientRank = m_rank - m_rowSize;
+		if (recipientRank < 0) recipientRank += m_totalBoards;
+		break;
+	case Organism::BoardMoves::DOWN: 
+		recipientRank = (m_rank + m_rowSize) % m_totalBoards;
+		break;
+	case Organism::BoardMoves::LEFT:
+		recipientRank = m_rank - 1;
+		if (recipientRank < 0) recipientRank += m_totalBoards;
+		break;
+	case Organism::BoardMoves::RIGHT:
+		recipientRank = (m_rank + 1) % m_totalBoards;
+		break;
+	}
+	return recipientRank;
+}
 
-	std::pair<int, int>* foodCoordinate = nullptr;
-	double distance = 1000;
-	// Check all coordinates within potentially visible distance
-	for (int i = smallestY; i <= largestY; i++) {
-		for (int j = smallestX; j <= largestX; j++) {
-			auto potentialFood = new std::pair<int, int>(j, i);
-			double potentialDistance = calculateDistance(&coordinates, potentialFood);
-			if (m_foodArray[j][i] > 0 // Is there actually food there?
-				&& sight >= potentialDistance // Can we see it?
-				&& distance > potentialDistance) // Is it closer than the other food?
-			{
-				delete foodCoordinate;
-				foodCoordinate = potentialFood;
-				distance = potentialDistance;
-			}
-			else delete potentialFood;
+
+void Board::initializeFoodArray() {
+	m_foodArray = new int* [10];
+	for (int i = 0; i < m_boardSize; i++)
+		m_foodArray[i] = new int[10];
+
+	for (int i = 0; i < m_boardSize; i++) {
+		for (int j = 0; j < m_boardSize; j++) {
+			m_foodArray[j][i] = 0;
 		}
 	}
-	return foodCoordinate;
 }
 
-/// <summary>
-/// Move the organism as close to the food as it can get
-/// </summary>
-/// <param name="pOrganism">Pointer to Organism object to determine sight and location</param>
-/// <param name="pFoodLocation">Pointer to location of the food</param>
-/// <returns>Whether the organism was able to move all the way to the food</returns>
-bool Board::moveClosestToFood(Organism* pOrganism, std::pair<int, int>* pFoodLocation) {
-	auto orgLocation = pOrganism->GetCoordinatePair();
-	double distanceOfDestination = calculateDistance(&orgLocation, pFoodLocation);
-	int speed = pOrganism->GetSpeed();
-	// Move to the food
-	if (speed >= distanceOfDestination) {
-		pOrganism->MoveToLocation(pFoodLocation);
-		delete pFoodLocation;
-		return true;
-	}
-
-	// Move as close to the food as possible
-	auto pDestCoordinate = new std::pair<int, int>(pFoodLocation->first, pFoodLocation->second);
-	// Continue changing destination until it is within movable distance
-	while (distanceOfDestination > speed){
-		//Determine where to move in x-direction
-		int adjustedX = calculateDesiredMovement(orgLocation.first, pDestCoordinate->first);
-		// Move in the x-direction
-		pDestCoordinate->first = pDestCoordinate->first + adjustedX; 
-		distanceOfDestination = calculateDistance(&orgLocation, pDestCoordinate);
-		if (speed >= distanceOfDestination) break; // Destination is within movable distance
-
-		//Determine where to move in y-direction
-		int adjustedY = calculateDesiredMovement(orgLocation.second, pDestCoordinate->second);
-		// Move in the y-direction
-		pDestCoordinate->second = pDestCoordinate->second + adjustedY; 
-		distanceOfDestination = calculateDistance(&orgLocation, pDestCoordinate);
-	}
-	pOrganism->MoveToLocation(pDestCoordinate);
-	delete pDestCoordinate, pFoodLocation;
-	return false;
-}
-
-/// <summary>
-/// Print the food array
-/// </summary>
+/*Print the food array*/ 
 void Board::printFoodArray() {
-	for (int i = 0; i < m_arraySize; i++) {
-		for (int j= 0; j < m_arraySize; j++) {
+	cout << "  ";
+	for (int i = 0; i < m_boardSize; i++)
+		cout << i << " ";
+	cout << endl;
+
+	for (int i = 0; i < m_boardSize; i++) {
+		cout << i << " ";
+		for (int j= 0; j < m_boardSize; j++) {
 			cout << m_foodArray[j][i] << " ";
 		}
 		cout << endl;
 	}
 }
 
-/// <summary>
-/// Print the statistics of the current board
-/// </summary>
+/*Print the statistics of the current board*/ 
 void Board::printStats() {
 	cout << "Board " << m_rank << ":\nContains " << m_organisms.size() << " organisms \nContains " << m_foodCount << " food\n" << endl;
 }
