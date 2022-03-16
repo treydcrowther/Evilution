@@ -1,43 +1,96 @@
 #ifndef EVILUTION_ORGANISM_H
 #define EVILUTION_ORGANISM_H
 
+#include <iostream>
+#include <vector>
+#include <chrono>
+
+typedef std::pair<int, int> CoordPair;
+typedef std::shared_ptr<CoordPair> PairPointer;
 
 class Organism {
 public:
-    explicit Organism(int* stats);
+    //These are used to send an organism to a different board
+    enum class BoardMoves
+    {
+        NONE,
+        UP,
+        DOWN,
+        LEFT,
+        RIGHT
+    };
 
-    void UpdateArray();
+    explicit Organism(int* stats);
+    
+    explicit Organism(int id, int x, int y, int speed, int sight);
 
     static int GetArraySize();
+    
+    static int* RandomOrganismStats();
+
+    PairPointer findAndConsumeFood(int** foodBoard, int boardSize);
+    
+    void printLocations();
+
+    void UpdateArray();
 
     void PrintStats() const;
 
     //Getters
+    int GetId();
     int GetX();
     int GetY();
     int GetSpeed();
     int GetSight();
+    int GetCurrentFood();
     int* GetStatsArray();
+    int* GetTransitionStatsArray();
+    PairPointer GetCoordinatePair();
+    PairPointer GetTransitionLocation();
+    BoardMoves GetTransitionDirection();
+    bool requiresTransition();
 
     //Setters
+    void SetId(int id);
     void SetX(int x);
     void SetY(int y);
     void SetSpeed(int speed);
     void SetSight(int sight);
 
 private:
-    static int m_array_size;
-    //The indices refer to each attributes location in the array
-    int m_x_location;
-    const int m_X_INDEX = 0;
-    int m_y_location;
-    const int m_Y_INDEX = 1;
-    int m_speed;
-    const int m_SPEED_INDEX = 2;
-    int m_sight;
-    const int m_SIGHT_INDEX = 3;
-    int* m_stats_array;
-};
+    bool moveClosestToFood(PairPointer pFoodLocation);
+    void ConsumeFood(int food);
+    void MoveToLocation(PairPointer location);
+    void moveRandomDirection(int boardSize);
+    void setTransitionLocation(PairPointer location);
+    void setRequiresTransition();
 
+    //The indices refer to each attributes location in the array
+    enum StatsIndices
+    {
+        ID,
+        X,
+        Y,
+        SPEED,
+        SIGHT,
+        FOOD
+    };
+    static int m_array_size;
+    int m_id;
+    int m_x_location;
+    int m_y_location;
+    int m_speed;
+    int m_sight;
+    int m_currentFood;
+
+    BoardMoves m_transitionDirection = BoardMoves::NONE;
+    int m_transitionX;
+    int m_transitionY;
+    bool m_requiresTransition;
+
+    int* m_stats_array;
+    bool m_moreFood; // Potential Idea: If set to true the organism will go after more food as opposed to closer food
+    std::vector<PairPointer> m_locationList;
+};
 
 #endif //EVILUTION_ORGANISM_H
