@@ -1,6 +1,7 @@
 #include <iostream>
 #include <mpi.h>
 #include "Board.h"
+#include "Simulation.h"
 
 void OrganismDriverCode(int rank);
 
@@ -18,12 +19,9 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    //OrganismDriverCode(rank);
+    Simulation* mySimulation = new Simulation(rank, size);
 
-    Board* board = new Board(rank, size);
-    for (int i = 1; i < 100; i++) {
-        board->timePassing(i);
-    }
+    //OrganismDriverCode(rank);    
 
     MPI_Finalize();
     return 0;
