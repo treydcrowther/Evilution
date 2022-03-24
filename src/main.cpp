@@ -19,7 +19,7 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    Simulation* mySimulation = new Simulation(rank, size);
+    auto sim = new Simulation(rank, size);
 
     //OrganismDriverCode(rank);    
 
