@@ -1,3 +1,4 @@
+#include <mpi.h>
 #include "Simulation.h"
 #include "Board.h"
 
@@ -24,6 +25,7 @@ void Simulation::RunSimulation(int daysToRun)
 
 		for (int j = 1; j < 100; j++) {
 			myBoard->timePassing(j);
+			MPI_Barrier(MCW);
 		}
 	}
 	
