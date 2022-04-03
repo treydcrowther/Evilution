@@ -3,3 +3,9 @@
 //
 
 #include "Configuration.h"
+Configuration::Configuration(OrgConfig org, BoardConfig board, SimConfig sim)
+{
+    orgConfig = org;
+    boardConfig = board;
+    simConfig = sim;
+}
