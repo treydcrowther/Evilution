@@ -170,7 +170,7 @@ void Organism::setTransitionLocation(PairPointer location) {
 /// <summary>
 /// Move a random direction and determine if a transition is necessary
 /// </summary>
-/// <param name="boardSize">The size of the food board</param>
+/// <param name="boardSize">The length of the food board</param>
 void Organism::moveRandomDirection(int boardSize) {
     auto time = static_cast<int>(chrono::high_resolution_clock::now()
         .time_since_epoch().count());

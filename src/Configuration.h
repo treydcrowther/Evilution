@@ -13,9 +13,10 @@ struct SimConfig
 
 struct BoardConfig
 {
-    int size; // length / width of a board (always square)
+    int length; // length / width of a board (always square)
     double foodDensity; // A measure of the amount of food on the board
-    int numOrgs; // number of organisms that start on a board
+    int numOrgs; // Number of organisms that start on a board
+    int numBoards; // Number of boards - same as number of processors
 };
 
 struct OrgConfig
@@ -28,6 +29,10 @@ struct OrgConfig
 class Configuration{
 public:
     Configuration(OrgConfig org, BoardConfig board, SimConfig sim);
+
+    OrgConfig GetOrgConfig();
+    BoardConfig GetBoardConfig();
+    SimConfig GetSimConfig();
 
 private:
     OrgConfig orgConfig;

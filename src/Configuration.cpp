@@ -9,3 +9,15 @@ Configuration::Configuration(OrgConfig org, BoardConfig board, SimConfig sim)
     boardConfig = board;
     simConfig = sim;
 }
+
+OrgConfig Configuration::GetOrgConfig() {
+    return orgConfig;
+}
+
+BoardConfig Configuration::GetBoardConfig() {
+    return boardConfig;
+}
+
+SimConfig Configuration::GetSimConfig() {
+    return simConfig;
+}

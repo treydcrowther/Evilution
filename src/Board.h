@@ -7,6 +7,8 @@
 #include <array>
 #include <iostream>
 #include "Organism.h"
+#include "Simulation.h"
+#include "Configuration.h"
 
 #define MCW MPI_COMM_WORLD
 constexpr auto ARRAYSIZE = 9;
@@ -14,7 +16,7 @@ typedef std::shared_ptr<Organism> OrganismPointer;
 
 class Board {
 public:
-    explicit Board(int rank, int totalBoards, std::string configFile = "");
+    explicit Board(int rank, BoardConfig board, OrgConfig org);
 
     void timePassing(int dayNumber);
 
