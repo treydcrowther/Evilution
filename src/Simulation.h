@@ -1,10 +1,13 @@
 #pragma once
 #include <string>
+#include "Configuration.h"
+#include "Board.h"
 
 
 class Simulation {
 public:
-	Simulation(int rank, int size, std::string configFilePath = "");
+	explicit Simulation(Configuration* config, int rank);
+
 	void RunSimulation(int numDays);
 	void GatherSimulationInfo();
 	void OutputSimulationResults();

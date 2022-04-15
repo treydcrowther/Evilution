@@ -1,21 +1,19 @@
 #include "Board.h"
 #include <iostream>
 #include <mpi.h>
+#include <cmath>
 
 using namespace std;
 
 /*Constructor for the board*/
-Board::Board(int rank, int totalBoards, string configFile) {
+Board::Board(int rank, BoardConfig board, OrgConfig org) {
 	m_rank = rank;
-	m_totalBoards = totalBoards;
+	m_totalBoards = board.numBoards;
 	m_rowSize = sqrt(m_totalBoards);
 	initializeFoodArray();
 
-	int initialOrganisms = 1;
-	if (configFile != "") {
-		// Pull necessary information from config file
+	int initialOrganisms = board.numOrgs;
 
-	}
 	if(rank == 3)
 		addOrganismToBoard(OrganismPointer(new Organism(0, 5, 5, 2, 8)));
 	addFoodToBoard(8, 7, 2);

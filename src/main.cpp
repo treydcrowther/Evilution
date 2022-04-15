@@ -2,6 +2,7 @@
 #include <mpi.h>
 #include "Board.h"
 #include "Simulation.h"
+#include "Configuration.h"
 
 void OrganismDriverCode(int rank);
 
@@ -19,7 +20,12 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    auto sim = new Simulation(rank, size);
+    SimConfig sim = {100, 10, size};
+    BoardConfig board = {3, 1.0, 10, size};
+    OrgConfig org = {1, 1, "uniform"};
+
+    auto config = new Configuration(org, board, sim);
+    auto simulation = new Simulation(config, rank);
 
     //OrganismDriverCode(rank);    
 

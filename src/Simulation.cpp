@@ -5,15 +5,11 @@
 using namespace std; 
 
 // Constructor for a new simulation
-Simulation::Simulation(int rank, int size, std::string configFilePath = "")
+Simulation::Simulation(Configuration* config, int rank)
 {
-	myBoard = new Board(rank, size, configFilePath);
-	myRank = rank;
-	numProcessors = size;
-	configPath = configFilePath;
-
-	// TODO: config file processing
-
+	numProcessors = config->GetSimConfig().numProcs;
+    myBoard = new Board(rank, config->GetBoardConfig(), config->GetOrgConfig());
+    myRank = rank;
 }
 
 // Runs the full simulation for the specified number of "days"
