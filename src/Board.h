@@ -7,7 +7,6 @@
 #include <array>
 #include <iostream>
 #include "Organism.h"
-#include "Simulation.h"
 #include "Configuration.h"
 
 #define MCW MPI_COMM_WORLD

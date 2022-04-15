@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SIMULATION_CPP_H
+#define SIMULATION_CPP_H
 #include <string>
 #include "Configuration.h"
 #include "Board.h"
@@ -18,3 +19,5 @@ private:
 	int numProcessors;
 	std::string configPath;
 };
+
+#endif //SIMULATION_CPP_H

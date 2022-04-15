@@ -1,6 +1,5 @@
 #include <iostream>
 #include <mpi.h>
-#include "Board.h"
 #include "Simulation.h"
 #include "Configuration.h"
 
