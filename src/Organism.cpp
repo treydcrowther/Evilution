@@ -163,7 +163,39 @@ void Organism::MoveToLocation(PairPointer location) {
 
 void Organism::setTransitionLocation(PairPointer location) {
     m_transitionX = location->first;
-    m_transitionY= location->second;
+    m_transitionY = location->second;
+}
+
+int* Organism::reproduce(int nextId) {
+    // If the organism doesn't have sufficient food it won't reproduce
+    if (m_currentFood < 0) return nullptr;
+    int speedMutation = mutate();
+    int sightMutation = mutate();
+    int* orgChild = new int[Organism::GetArraySize()];
+    orgChild[ID] = nextId;
+    orgChild[X] = this->GetX();
+    orgChild[Y] = this->GetY();
+    int speed = this->GetSpeed() + speedMutation;
+    orgChild[SPEED] = speed > 0 ? speed : 1 ;
+    int sight = this->GetSight() + sightMutation;
+    orgChild[SIGHT] = sight > 0 ? sight : 1;
+    orgChild[FOOD] = 0;
+    return orgChild;
+}
+
+int Organism::mutate() {
+    auto time = static_cast<int>(chrono::high_resolution_clock::now()
+        .time_since_epoch().count());
+    srand(time);
+    // 5% chance of mutating by -2
+    if (rand() % 20 == 0) return -2;
+    // 25% chance of mutating by -1
+    if (rand() % 4 == 0) return -1;
+    // 25% chance of mutating by +1
+    if (rand() % 4 == 0) return 1;
+    // 5% chance of mutating by +2
+    if (rand() % 20 == 0) return 2;
+    return 0;
 }
 
 /// <summary>
@@ -189,24 +221,20 @@ void Organism::moveRandomDirection(int boardSize) {
     if (newLocation->first >= boardSize) {
         m_transitionDirection = BoardMoves::RIGHT;
         newLocation->first = newLocation->first % boardSize;
-        cout << "transition right\n\n" << endl;
     }
     else if (newLocation->first < 0) {
         m_transitionDirection = BoardMoves::LEFT;
         newLocation->first = newLocation->first % boardSize;
         if (newLocation->first < 0)newLocation->first += boardSize;
-        cout << "transition left\n\n" << endl;
     }
     else if (newLocation->second >= boardSize) {
         m_transitionDirection = BoardMoves::DOWN;
         newLocation->second = newLocation->second % boardSize;
-        cout << "transition Down\n\n" << endl;
     }
     else if (newLocation->second < 0) {
         m_transitionDirection = BoardMoves::UP;
         newLocation->second = newLocation->second % boardSize;
         if (newLocation->second < 0)newLocation->second += boardSize;
-        cout << "transition UP\n\n" << endl;
     }
     else {
         m_transitionDirection = BoardMoves::NONE;
@@ -230,15 +258,25 @@ int calculateDesiredMovement(int organismLoc, int destination) {
     return adjustedMove != 0 ? adjustedMove / abs(adjustedMove) : adjustedMove;
 }
 
+// Consume the daily food
+void Organism::removeDailyFoodFromOrganism() {
+    m_currentFood -= m_foodPerDay;
+}
+
+bool Organism::doesOrganismSurvive() {
+    return m_currentFood > m_requiredFoodToSurvive;
+}
 
 /// <summary>
+/// Reduce the food count of the organism
 /// Find the nearest food and move to it 
 /// or move in a random direction and determine if a transition is necessary
 /// </summary>
 /// <param name="foodBoard">The board containing the food</param>
 /// <param name="boardSize">The width/length of the food array</param>
-/// <returns>Where the organism consumed food</returns>
-PairPointer Organism::findAndConsumeFood(int** foodBoard, int boardSize) {
+/// <returns>Where the organism consumed food, if at all</returns>
+PairPointer Organism::findAndConsumeFood(int** foodBoard, int boardSize, int rank) {
+    removeDailyFoodFromOrganism();
     int x = m_x_location;
     int y = m_y_location;
     int smallestX = (x - m_sight) > 0 ? x - m_sight : 0;
@@ -268,7 +306,7 @@ PairPointer Organism::findAndConsumeFood(int** foodBoard, int boardSize) {
         return nullptr;
     }
     // If the organism arrived at the nearest food
-    if (moveClosestToFood(foodCoordinate)) {
+    if (moveClosestToFood(foodCoordinate, rank)) {
         ConsumeFood(foodBoard[GetX()][GetY()]);
         return PairPointer(new CoordPair(GetX(), GetY()));
     }
@@ -276,12 +314,13 @@ PairPointer Organism::findAndConsumeFood(int** foodBoard, int boardSize) {
     return nullptr;
 }
 
+
 /// <summary>
 /// Move as close to the food as possible
 /// </summary>
 /// <param name="pFoodLocation">The x,y coordinate location of the food</param>
 /// <returns>Whether the organism arrived at the nearest food</returns>
-bool Organism::moveClosestToFood(PairPointer pFoodLocation) {
+bool Organism::moveClosestToFood(PairPointer pFoodLocation, int rank) {
     auto orgLocation = GetCoordinatePair();
     double distanceOfDestination = calculateDistance(orgLocation, pFoodLocation);
     int speed = GetSpeed();
@@ -290,7 +329,6 @@ bool Organism::moveClosestToFood(PairPointer pFoodLocation) {
         MoveToLocation(pFoodLocation);
         return true;
     }
-
     // Move as close to the food as possible
     auto pDestCoordinate = PairPointer(new CoordPair(pFoodLocation->first, pFoodLocation->second));
     while (distanceOfDestination > speed) {
@@ -317,15 +355,14 @@ void Organism::printLocations() {
 void Organism::ConsumeFood(int food) {
     m_currentFood += food;
     m_stats_array[FOOD] = m_currentFood;
-    cout << "Organism " << m_id << " consumed " << food << " food at " << m_x_location << "," << m_y_location << " And now has " << m_currentFood << " food" << endl;
 }
 
-int* Organism::RandomOrganismStats() {
+int* Organism::RandomOrganismStats(int orgId, int speed, int sight) {
     int numAttributes = Organism::GetArraySize();
     int* stats = new int[numAttributes];
-    for (int i = 0; i < numAttributes; i++)
-    {
-        stats[i] = i * 2 + 1;
-    }
+    stats[ID] = orgId;
+    stats[SPEED] = speed;
+    stats[SIGHT] = sight;
+    
     return stats;
 }

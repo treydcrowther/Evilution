@@ -17,6 +17,7 @@ struct BoardConfig
     double foodDensity; // A measure of the amount of food on the board
     int numOrgs; // Number of organisms that start on a board
     int numBoards; // Number of boards - same as number of processors
+    int foodSpawnedPerDay; // Amount of food that is spawned after each day
 };
 
 struct OrgConfig

@@ -2,26 +2,26 @@
 #include <iostream>
 #include <mpi.h>
 #include <cmath>
+#include "RandomGenerator.h"
 
 using namespace std;
 
 /*Constructor for the board*/
 Board::Board(int rank, BoardConfig board, OrgConfig org) {
 	m_rank = rank;
+	m_boardSize = board.length;
 	m_totalBoards = board.numBoards;
 	m_rowSize = sqrt(m_totalBoards);
+	m_nextOrganismId = rank * 1000;
+	m_foodSpawnedPerDay = board.foodSpawnedPerDay;
 	initializeFoodArray();
-
 	int initialOrganisms = board.numOrgs;
 
-	if(rank == 3)
-		addOrganismToBoard(OrganismPointer(new Organism(0, 5, 5, 2, 8)));
-	addFoodToBoard(8, 7, 2);
-	addFoodToBoard(7, 0, 1);
-	addFoodToBoard(7, 7, 1);
-	addFoodToBoard(0, 3, 1);
-	addFoodToBoard(0, 8, 1);
-	addFoodToBoard(5, 4, 1);
+	for (int i = 0; i < initialOrganisms; i++) {
+		addOrganismToBoard(OrganismPointer(
+			new Organism(m_nextOrganismId++, Random::getRand(m_boardSize), Random::getRand(m_boardSize), org.speed, org.sight)));
+	}
+	spawnInitialFood(board.foodDensity);
 }
 
 int Board::getBoardSize() {
@@ -30,6 +30,33 @@ int Board::getBoardSize() {
 
 int** Board::getFoodBoard() {
 	return m_foodArray;
+}
+
+Board::BoardInfo Board::calculateDailySimulationInfo() {
+	double totalSight = 0;
+	double totalSpeed = 0;
+	double totalOrganisms = 0;
+	double totalFood = 0;
+	for (OrganismPointer op : m_organisms) {
+		totalSight += op->GetSight();
+		totalSpeed += op->GetSpeed();
+		totalFood += op->GetCurrentFood();
+	}
+	totalOrganisms = m_organisms.size();
+	auto simInfo = BoardInfo{ totalOrganisms, totalSpeed, totalSight, totalFood};
+	//cout << "Rank " << m_rank << ": Total Organisms " << totalOrganisms << " Sight " << totalSight << " Speed " << totalSpeed << " Food " << totalFood << endl;
+	return simInfo;
+}
+
+void Board::spawnDailyFood() {
+	for (int i = 0; i < m_foodSpawnedPerDay; i++)
+		m_foodArray[Random::getRand(m_boardSize)][Random::getRand(m_boardSize)] += 1;
+}
+
+void Board::spawnInitialFood(double foodDensity) {
+	double numFood = (m_boardSize * m_boardSize) * foodDensity;
+	for (int i = 0; i < numFood; i++)
+		m_foodArray[Random::getRand(m_boardSize)][Random::getRand(m_boardSize)] += 1;
 }
 
 // Remove food from the board once it has been consumed
@@ -56,37 +83,51 @@ void Board::removeOrganismFromBoard(OrganismPointer pOrganism) {
 }
 
 
-void Board::timePassing(int dayNumber) {
+Board::BoardInfo Board::liveForADay() {
+	std::vector<OrganismPointer> newOrganismChildren = std::vector<OrganismPointer>();
+	std::vector<OrganismPointer> organismsToKill = std::vector<OrganismPointer>();
 	for (auto pOrganism : m_organisms) {
-		cout << "Day " << dayNumber << " for board " << m_rank << endl;
-		removeFood(pOrganism->findAndConsumeFood(getFoodBoard(), getBoardSize()));
+		removeFood(pOrganism->findAndConsumeFood(getFoodBoard(), getBoardSize(), m_rank));
+		// Kill off organisms who have not found food in 2 days
+		if (!pOrganism->doesOrganismSurvive()) {
+			organismsToKill.push_back(pOrganism);
+			continue;
+		}
+		// Transition organisms to new boards if necessary
 		if (pOrganism->requiresTransition()) m_organismsToSend.push_back(pOrganism);
-		pOrganism->PrintStats();
+		// Reproduce and add new organism to the board
+		auto orgChild = pOrganism->reproduce(m_nextOrganismId);
+		if (orgChild != nullptr) {
+			m_nextOrganismId++;
+			newOrganismChildren.push_back(OrganismPointer(new Organism(orgChild)));
+		}
 	}
-	MPI_Barrier(MCW);
+	for (OrganismPointer op : newOrganismChildren) addOrganismToBoard(op);
+	for (OrganismPointer op : organismsToKill) removeOrganismFromBoard(op);
+	spawnDailyFood();
 	sendAndReceiveOrganisms();
+	return calculateDailySimulationInfo();
 }
 
 // Transition all organisms to new boards
 void Board::sendAndReceiveOrganisms() {
+	// Create list of organisms for each of the other processes
 	auto listOfOrganisms = std::vector<std::vector<OrganismPointer>>();
 	for (int i = 0; i < m_totalBoards; i++)
 		listOfOrganisms.push_back(std::vector<OrganismPointer>());
-
+	// Place organisms in correct containers to be sent to other boards
 	for (auto pOrganism : m_organismsToSend) {
  		int recipient = determineRecipient(pOrganism->GetTransitionDirection());
 		listOfOrganisms.at(recipient).push_back(pOrganism);
 		removeOrganismFromBoard(pOrganism);
 	}
 	m_organismsToSend.clear();
-
 	for (int i = 0; i < m_totalBoards; i++) {
 		if (i == m_rank) continue;
 		int numOrganismsToSend = listOfOrganisms.at(i).size();
 		MPI_Send(&numOrganismsToSend, 1, MPI_INT, i, 0, MCW);
 		int numOrganismsToRecv;
 		MPI_Recv(&numOrganismsToRecv, 1, MPI_INT, i, 0, MCW, MPI_STATUS_IGNORE);
-		
 		// Send all the organisms
 		for (auto organism : listOfOrganisms.at(i)) {
 			int* organismStats = organism->GetTransitionStatsArray();
@@ -96,7 +137,7 @@ void Board::sendAndReceiveOrganisms() {
 		for (int j = 0; j < numOrganismsToRecv; j++) {
 			int* organismStats = new int[Organism::GetArraySize()];
 			MPI_Recv(organismStats, Organism::GetArraySize(), MPI_INT, i, 0, MCW, MPI_STATUS_IGNORE);
-			cout << "Organism " << organismStats[0] << " transitioned to board " << m_rank << " at location " << organismStats[1] << "," << organismStats[2] << endl;
+			//cout << "Organism " << organismStats[0] << " transitioned to board " << m_rank << " at location " << organismStats[1] << "," << organismStats[2] << endl;
 			addOrganismToBoard(OrganismPointer(new Organism(organismStats)));
 		}
 	}
@@ -126,9 +167,9 @@ int Board::determineRecipient(Organism::BoardMoves move) {
 
 
 void Board::initializeFoodArray() {
-	m_foodArray = new int* [10];
+	m_foodArray = new int* [m_boardSize];
 	for (int i = 0; i < m_boardSize; i++)
-		m_foodArray[i] = new int[10];
+		m_foodArray[i] = new int[m_boardSize];
 
 	for (int i = 0; i < m_boardSize; i++) {
 		for (int j = 0; j < m_boardSize; j++) {
