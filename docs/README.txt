@@ -4,6 +4,6 @@ To build Evilution, run the command:
 
 To run Evilution, run the command:
 
-	mpiexec -n <number of processors> ./cmake-build-debug/Evilution
+	mpiexec -n <number of processors> ./cmake-build-debug/<filename>
 	
 Note: the number of processors must be square.
