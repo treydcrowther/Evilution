@@ -12,8 +12,12 @@ Board::Board(int rank, BoardConfig board, OrgConfig org) {
 	m_boardSize = board.length;
 	m_totalBoards = board.numBoards;
 	m_rowSize = sqrt(m_totalBoards);
+	m_foodCount = 0;
 	m_nextOrganismId = rank * 1000;
 	m_foodSpawnedPerDay = board.foodSpawnedPerDay;
+	m_spawnFoodByPercentage = board.spawnFoodPercentage;
+	if(m_spawnFoodByPercentage) m_foodPercentagePerDay = board.percentageFoodPerDay;
+
 	initializeFoodArray();
 	int initialOrganisms = board.numOrgs;
 
@@ -36,27 +40,27 @@ Board::BoardInfo Board::calculateDailySimulationInfo() {
 	double totalSight = 0;
 	double totalSpeed = 0;
 	double totalOrganisms = 0;
-	double totalFood = 0;
 	for (OrganismPointer op : m_organisms) {
 		totalSight += op->GetSight();
 		totalSpeed += op->GetSpeed();
-		totalFood += op->GetCurrentFood();
 	}
 	totalOrganisms = m_organisms.size();
-	auto simInfo = BoardInfo{ totalOrganisms, totalSpeed, totalSight, totalFood};
+	auto simInfo = BoardInfo{ totalOrganisms, totalSpeed, totalSight, (double)m_foodCount};
 	//cout << "Rank " << m_rank << ": Total Organisms " << totalOrganisms << " Sight " << totalSight << " Speed " << totalSpeed << " Food " << totalFood << endl;
 	return simInfo;
 }
 
 void Board::spawnDailyFood() {
-	for (int i = 0; i < m_foodSpawnedPerDay; i++)
-		m_foodArray[Random::getRand(m_boardSize)][Random::getRand(m_boardSize)] += 1;
+	int foodToSpawn = m_foodSpawnedPerDay;
+	if (m_spawnFoodByPercentage) foodToSpawn = m_foodPercentagePerDay * (m_boardSize * m_boardSize);
+	for (int i = 0; i < foodToSpawn; i++)
+		addFoodToBoard(Random::getRand(m_boardSize), Random::getRand(m_boardSize), 1);
 }
 
 void Board::spawnInitialFood(double foodDensity) {
 	double numFood = (m_boardSize * m_boardSize) * foodDensity;
 	for (int i = 0; i < numFood; i++)
-		m_foodArray[Random::getRand(m_boardSize)][Random::getRand(m_boardSize)] += 1;
+		addFoodToBoard(Random::getRand(m_boardSize),Random::getRand(m_boardSize), 1);
 }
 
 // Remove food from the board once it has been consumed

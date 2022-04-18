@@ -19,6 +19,7 @@ private:
 	int numProcessors;
 	int m_numDays;
 	int m_numLoops;
+	int m_numSimulations;
 	std::string configPath;
 	std::vector<Board::BoardInfo> m_boardInfoList;
 	

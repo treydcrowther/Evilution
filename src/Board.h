@@ -53,6 +53,8 @@ private:
     int m_boardSize;
     int m_totalBoards;
     int m_nextOrganismId;
+    bool m_spawnFoodByPercentage;
+    double m_foodPercentagePerDay;
 
     std::vector<OrganismPointer> m_organisms;
     std::vector<OrganismPointer> m_organismsToSend;
