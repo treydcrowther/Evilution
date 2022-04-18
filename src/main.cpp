@@ -1,5 +1,6 @@
 #include <iostream>
 #include <mpi.h>
+#include <cmath>
 #include "Simulation.h"
 #include "Configuration.h"
 
@@ -12,8 +13,8 @@ int main(int argc, char** argv)
     MPI_Comm_rank(MCW, &rank);
     MPI_Comm_size(MCW, &size);
 
-    if (size != 4 && size != 9 && size != 16 && size != 25) {
-        cout << "Number of processes/boards must be either 4, 9, 16, 25" << endl;
+    if (sqrt(size)*sqrt(size) != size) {
+        cout << "Number of processes/boards must be a square (4, 9, 16, 25,...)" << endl;
         MPI_Finalize();
         return 1;
     }
