@@ -9,6 +9,7 @@ struct SimConfig
     int loops; // Number of iterations to run the simulation
     int loopsPerDay; // Number of loops that constitute a 'day'
     int numProcs; // Number of processes (which will be the number of boards
+    int numSimulations;
 };
 
 struct BoardConfig
@@ -18,6 +19,8 @@ struct BoardConfig
     int numOrgs; // Number of organisms that start on a board
     int numBoards; // Number of boards - same as number of processors
     int foodSpawnedPerDay; // Amount of food that is spawned after each day
+    bool spawnFoodPercentage; // Spawn food based on a percentage as opposed to a specific value
+    double percentageFoodPerDay; // Food percentage to spawn each day
 };
 
 struct OrgConfig
