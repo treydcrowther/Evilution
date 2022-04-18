@@ -7,42 +7,52 @@
 #include <array>
 #include <iostream>
 #include "Organism.h"
-#include "Simulation.h"
 #include "Configuration.h"
 
 #define MCW MPI_COMM_WORLD
-constexpr auto ARRAYSIZE = 9;
 typedef std::shared_ptr<Organism> OrganismPointer;
 
 class Board {
 public:
     explicit Board(int rank, BoardConfig board, OrgConfig org);
 
-    void timePassing(int dayNumber);
+    struct BoardInfo {
+        double numOrganisms;
+        double totalOrganismSpeed;
+        double totalOrganismSight;
+        double totalOrganismFood;
+        double* getSimInfoArray() {
+            return new double[] {numOrganisms, totalOrganismSpeed, totalOrganismSight, totalOrganismFood};
+        }
+    };
 
+    BoardInfo liveForADay();
     void printFoodArray();
-
     void printStats();
-
     int** getFoodBoard();
-
     int getBoardSize();
 
 private:
+    void spawnDailyFood();
+    void spawnInitialFood(double foodDensity);
     void initializeFoodArray();
     void addOrganismToBoard(OrganismPointer pOrganism);
     void addFoodToBoard(int x, int y, int count);
     void sendAndReceiveOrganisms();
-    int determineRecipient(Organism::BoardMoves move);
     void removeOrganismFromBoard(OrganismPointer pOrganism);
     void removeFood(PairPointer location);
-
+    int determineRecipient(Organism::BoardMoves move);
+    BoardInfo calculateDailySimulationInfo();
+    
+    
     int m_rank;
     int m_foodCount;
     int** m_foodArray;
+    int m_foodSpawnedPerDay;
     int m_rowSize;
-    int m_boardSize = ARRAYSIZE;
+    int m_boardSize;
     int m_totalBoards;
+    int m_nextOrganismId;
 
     std::vector<OrganismPointer> m_organisms;
     std::vector<OrganismPointer> m_organismsToSend;

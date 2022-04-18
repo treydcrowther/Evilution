@@ -8,6 +8,9 @@
 typedef std::pair<int, int> CoordPair;
 typedef std::shared_ptr<CoordPair> PairPointer;
 
+#define FOODTOSURVIVE -2
+#define FOODEATENPERDAY 1
+
 class Organism {
 public:
     //These are used to send an organism to a different board
@@ -21,19 +24,14 @@ public:
     };
 
     explicit Organism(int* stats);
-    
     explicit Organism(int id, int x, int y, int speed, int sight);
-
     static int GetArraySize();
-    
-    static int* RandomOrganismStats();
-
-    PairPointer findAndConsumeFood(int** foodBoard, int boardSize);
-    
+    static int* RandomOrganismStats(int id, int speed = -1, int sight = -1);
+    PairPointer findAndConsumeFood(int** foodBoard, int boardSize, int rank);
+    bool doesOrganismSurvive();
+    int* reproduce(int nextId);
     void printLocations();
-
     void UpdateArray();
-
     void PrintStats() const;
 
     //Getters
@@ -58,12 +56,14 @@ public:
     void SetSight(int sight);
 
 private:
-    bool moveClosestToFood(PairPointer pFoodLocation);
+    int mutate();
+    bool moveClosestToFood(PairPointer pFoodLocation, int rank);
     void ConsumeFood(int food);
     void MoveToLocation(PairPointer location);
     void moveRandomDirection(int boardSize);
     void setTransitionLocation(PairPointer location);
     void setRequiresTransition();
+    void removeDailyFoodFromOrganism();
 
     //The indices refer to each attributes location in the array
     enum StatsIndices
@@ -82,6 +82,8 @@ private:
     int m_speed;
     int m_sight;
     int m_currentFood;
+    int m_foodPerDay = FOODEATENPERDAY;
+    int m_requiredFoodToSurvive = FOODTOSURVIVE;
 
     BoardMoves m_transitionDirection = BoardMoves::NONE;
     int m_transitionX;
