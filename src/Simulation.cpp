@@ -10,27 +10,35 @@ Simulation::Simulation(Configuration* config, int rank)
 	numProcessors = config->GetSimConfig().numProcs;
 	m_numDays = config->GetSimConfig().loops;
 	m_numLoops = config->GetSimConfig().loopsPerDay;
-	m_numSimulations = config->GetSimConfig().numSimulations;
     myBoard = new Board(rank, config->GetBoardConfig(), config->GetOrgConfig());
     myRank = rank;
+}
+
+void Simulation::RunMultipleSimulations(Configuration* config, int rank) {
+	
+	int numSims = config->GetSimConfig().numSimulations;
+	for (int i = 0; i < numSims; i++) {
+		if(!rank)cout << "Simulation " << i << endl;
+ 		auto sim = new Simulation(config, rank);
+		sim->RunSimulation();
+		delete sim;
+	}
 }
 
 // Runs the full simulation for the specified number of "days"
 void Simulation::RunSimulation()
 {
-	for (int k = 0; k < m_numSimulations; k++) {
-		for (int i = 0; i < m_numDays; i++)
-		{
-			MPI_Barrier(MCW);
-			// TODO: New day begins (maybe .newDay function)
-			for (int j = 0; j < m_numLoops; j++) {
-				trackBoardInfo(myBoard->liveForADay());
-			}
+	for (int i = 0; i < m_numDays; i++)
+	{
+		if (!myRank && i % 500 == 0) cout << i << endl;
+		MPI_Barrier(MCW);
+		// TODO: New day begins (maybe .newDay function)
+		for (int j = 0; j < m_numLoops; j++) {
+			trackBoardInfo(myBoard->liveForADay());
 		}
-		cout << "Simulation " << k << ":" << endl;
-		GatherSimulationInfo();
-		cout << "\n\n\n\n\n\n\n\n\n\n";
 	}
+	GatherSimulationInfo();
+	cout << "\n\n\n\n\n\n\n\n\n\n";
 
 }
 

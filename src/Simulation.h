@@ -9,6 +9,7 @@ class Simulation {
 public:
 	explicit Simulation(Configuration* config, int rank);
 
+	static void RunMultipleSimulations(Configuration* config, int rank);
 	void RunSimulation();
 	void GatherSimulationInfo();
 	void OutputSimulationResults();
@@ -19,7 +20,6 @@ private:
 	int numProcessors;
 	int m_numDays;
 	int m_numLoops;
-	int m_numSimulations;
 	std::string configPath;
 	std::vector<Board::BoardInfo> m_boardInfoList;
 	

@@ -21,16 +21,15 @@ int main(int argc, char** argv)
     }
 
     // SimConfig: loops, loopsPerDay, numProcs, numSimulationsToRun
-    SimConfig sim = {5000, 1, size, 4};
+    SimConfig sim = {5000, 1, size, 5};
     // BoardConfig: lengthOfBoard foodDensity, numInitialOrganisms, numBoards, foodSpawnedPerDay, spawnFoodByPercentage, percentageToSpawn
     BoardConfig board = {100, .5, 30, size, 8, true, .01};
     // OrgConfig: speed, sight, distribution(normal or uniform)
     OrgConfig org = {1, 1, "uniform"};
 
     auto config = new Configuration(org, board, sim);
-    auto simulation = new Simulation(config, rank);
 
-    simulation->RunSimulation();
+    Simulation::RunMultipleSimulations(config,rank);
 
     MPI_Finalize();
     return 0;
