@@ -9,6 +9,7 @@ class Simulation {
 public:
 	explicit Simulation(Configuration* config, int rank);
 
+	static void RunMultipleSimulations(Configuration* config, int rank);
 	void RunSimulation();
 	void GatherSimulationInfo();
 	void OutputSimulationResults();

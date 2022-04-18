@@ -6,6 +6,7 @@
 #include <vector>
 #include <array>
 #include <iostream>
+#include <memory>
 #include "Organism.h"
 #include "Configuration.h"
 
@@ -22,7 +23,7 @@ public:
         double totalOrganismSight;
         double totalOrganismFood;
         double* getSimInfoArray() {
-            return new double[] {numOrganisms, totalOrganismSpeed, totalOrganismSight, totalOrganismFood};
+            return new double[4] {numOrganisms, totalOrganismSpeed, totalOrganismSight, totalOrganismFood};
         }
     };
 
@@ -53,6 +54,8 @@ private:
     int m_boardSize;
     int m_totalBoards;
     int m_nextOrganismId;
+    bool m_spawnFoodByPercentage;
+    double m_foodPercentagePerDay;
 
     std::vector<OrganismPointer> m_organisms;
     std::vector<OrganismPointer> m_organismsToSend;
