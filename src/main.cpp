@@ -3,8 +3,6 @@
 #include "Simulation.h"
 #include "Configuration.h"
 
-void OrganismDriverCode(int rank);
-
 using namespace std;
 
 int main(int argc, char** argv)

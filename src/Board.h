@@ -6,6 +6,7 @@
 #include <vector>
 #include <array>
 #include <iostream>
+#include <memory>
 #include "Organism.h"
 #include "Configuration.h"
 
@@ -22,7 +23,7 @@ public:
         double totalOrganismSight;
         double totalOrganismFood;
         double* getSimInfoArray() {
-            return new double[] {numOrganisms, totalOrganismSpeed, totalOrganismSight, totalOrganismFood};
+            return new double[4] {numOrganisms, totalOrganismSpeed, totalOrganismSight, totalOrganismFood};
         }
     };
 

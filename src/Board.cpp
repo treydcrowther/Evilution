@@ -79,7 +79,13 @@ void Board::addOrganismToBoard(OrganismPointer pOrganism) {
 }
 
 void Board::removeOrganismFromBoard(OrganismPointer pOrganism) {
-	m_organisms.erase(std::remove(m_organisms.begin(), m_organisms.end(), pOrganism));
+    for(int i = 0; i < m_organisms.size(); i++)
+    {
+        if(m_organisms[i] == pOrganism)
+        {
+            m_organisms.erase(m_organisms.begin() + i);
+        }
+    }
 }
 
 

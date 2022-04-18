@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <chrono>
+#include <memory>
 
 typedef std::pair<int, int> CoordPair;
 typedef std::shared_ptr<CoordPair> PairPointer;

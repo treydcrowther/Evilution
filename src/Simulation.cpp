@@ -63,7 +63,7 @@ void Simulation::GatherSimulationInfo()
 			//cout << "Day " << i << ": Total Organisms " << totalOrganisms << " Sight " << avgOrganismSight << " Speed " << avgOrganismSpeed << " Food " << avgOrganismFood << endl;
 			cout << i << ", " << totalOrganisms << ", " << avgOrganismSight << ", " << avgOrganismSpeed << ", " << avgOrganismFood << endl;
 		}
-		delete recvInfoArray, simInfoArray;
+		delete[] recvInfoArray, simInfoArray;
 	}
 }
 
